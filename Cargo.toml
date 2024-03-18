@@ -1,0 +1,19 @@
+[package]
+name = "simple-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = { level = "deny", priority = 2 }
+nursery = { level = "deny", priority = 1 }
+unwrap_used = { level = "deny", priority = 0 }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"
