@@ -20,53 +20,49 @@
       systems = utils.lib.defaultSystems;
 
       perSystem = { pkgs, system, ... }:
-        let overlays = [ (import rust-overlay) ];
+        let
+          overlays = [ (import rust-overlay) ];
+          pname = "nightly-rust";
+          rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile
+            ./rust-toolchain.toml;
+          craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
+          src = craneLib.cleanCargoSource (craneLib.path ./.);
+          commonArgs = {
+            inherit pname src;
+            strictDeps = true;
+            version = "0.1";
+          };
+          cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+          bin =
+            craneLib.buildPackage (commonArgs // { inherit cargoArtifacts; });
+
+          treeFmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
         in {
-          _modules.args.pkgs = import nixpkgs { inherit system overlays; };
+          _module.args.pkgs = import nixpkgs { inherit system overlays; };
 
-          perSystem = { pkgs, ... }:
-            let
-              pname = "nightly-rust";
-              rustToolchain =
-                pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile
-                ./rust-toolchain.toml;
-              craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-              src = craneLib.cleanCargoSource (craneLib.path ./.);
-              commonArgs = {
-                inherit pname src;
-                strictDeps = true;
-                version = "0.1";
-              };
-              cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-              bin = craneLib.buildPackage
-                (commonArgs // { inherit cargoArtifacts; });
+          devShells.default = craneLib.devShell {
+            inputsFrom = [ bin ];
+            packages = with pkgs; [ just bacon ];
+          };
 
-              treeFmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
-            in {
-              devShells.default = craneLib.devShell {
-                inputsFrom = [ bin ];
-                packages = with pkgs; [ just bacon ];
-              };
+          # `nix build`.
+          packages = {
+            inherit bin;
+            default = bin;
+          };
 
-              # `nix build`.
-              packages = {
-                inherit bin;
-                default = bin;
-              };
+          # `nix run`.
+          apps.default = utils.lib.mkApp { drv = bin; };
 
-              # `nix run`.
-              apps.default = utils.lib.mkApp { drv = bin; };
-
-              # `nix flake check`.
-              checks = {
-                inherit bin;
-                fmt = craneLib.cargoFmt { inherit src; };
-                clippy = craneLib.cargoClippy
-                  (commonArgs // { inherit cargoArtifacts; });
-              };
-              # `nix fmt`
-              formatter = treeFmtEval.config.build.wrapper;
-            };
+          # `nix flake check`.
+          checks = {
+            inherit bin;
+            fmt = craneLib.cargoFmt { inherit src; };
+            clippy =
+              craneLib.cargoClippy (commonArgs // { inherit cargoArtifacts; });
+          };
+          # `nix fmt`
+          formatter = treeFmtEval.config.build.wrapper;
         };
     };
 }
