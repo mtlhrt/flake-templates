@@ -9,11 +9,11 @@ edition = "2021"
 unsafe_code = "forbid"
 
 [lints.clippy]
+missing_errors_doc = { level = "warn", priority = 3 } # important for libs, negligible for bins.
 pedantic = { level = "deny", priority = 2 }
 nursery = { level = "deny", priority = 1 }
 unwrap_used = { level = "deny", priority = 0 }
 
 [profile.release]
 lto = true
-codegen-units = 1
 strip = "symbols"

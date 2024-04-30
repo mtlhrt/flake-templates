@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     utils.url = "github:numtide/flake-utils";
     parts.url = "github:hercules-ci/flake-parts";
@@ -16,20 +16,18 @@
   };
   outputs = inputs@{ nixpkgs, parts, utils, rust, crane, treefmt-nix, ... }:
     parts.lib.mkFlake { inherit inputs; } {
-      systems = utils.lib.defaultSystems;
+      systems = [ "x86_64-linux" "aarch64-linux" ];
 
-      perSystem = { pkgs, system, ... }:
+      perSystem = { system, ... }:
         let
-          pname = "nightly-rust";
-          pkgs = nixpkgs.legacyPackages.${system}.extends rust.overlays.default;
+          pkgs = nixpkgs.legacyPackages.${system}.extend rust.overlays.default;
           rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile
             ./rust-toolchain.toml;
           craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
           src = craneLib.cleanCargoSource (craneLib.path ./.);
           commonArgs = {
-            inherit pname src;
+            inherit src;
             strictDeps = true;
-            version = "0.1";
           };
           cargoArtifacts = craneLib.buildDepsOnly commonArgs;
           bin =
@@ -38,7 +36,7 @@
         in {
           devShells.default = craneLib.devShell {
             inputsFrom = [ bin ];
-            packages = with pkgs; [ just bacon ];
+            packages = with pkgs; [ just bacon cargo-udeps ];
           };
 
           packages.default = bin;
