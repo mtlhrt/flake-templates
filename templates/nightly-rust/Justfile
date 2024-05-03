@@ -1,9 +1,5 @@
 _default:
   just --list
-run *args:
-  nix run {{args}}
-build *args:
-  nix build {{args}}
 check:
   nix fmt
   nix flake check
