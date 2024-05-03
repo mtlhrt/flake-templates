@@ -5,10 +5,8 @@ Requires [direnv](https://github.com/direnv/direnv) for the development environm
 
 It includes:
 - [Just](https://github.com/casey/just) as a command runner.
-- [Crane](https://github.com/ipetkov/crane) for managing builds, checks and tests (`just build`, `just run`).
 - [treefmt(-nix)](https://github.com/numtide/treefmt-nix) for project-wide formatting (`nix fmt`).
 - [Bacon](https://github.com/Canop/bacon) for background code checking (`just watch`).
-- [cargo-udeps](https://github.com/est31/cargo-udeps) for pruning unused dependencies (`just udeps`).
 
 Linting is configured to be stricter,
 and some harmless [options to minimise binary size and shorten compile times](https://github.com/johnthagen/min-sized-rust) are applied

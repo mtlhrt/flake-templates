@@ -2,54 +2,31 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     treefmt-nix.url = "github:numtide/treefmt-nix";
-    utils.url = "github:numtide/flake-utils";
     parts.url = "github:hercules-ci/flake-parts";
+    naersk.url = "github:nix-community/naersk";
     rust = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "utils";
     };
-    crane = {
-      url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
-  outputs = inputs@{ nixpkgs, parts, utils, rust, crane, treefmt-nix, ... }:
+  outputs = inputs@{ nixpkgs, parts, rust, treefmt-nix, naersk, ... }:
     parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" ];
 
       perSystem = { system, ... }:
         let
-          pkgs = nixpkgs.legacyPackages.${system}.extend rust.overlays.default;
+          overlays = [ (import rust) ];
+          pkgs = import nixpkgs { inherit system overlays; };
           rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile
             ./rust-toolchain.toml;
-          craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-          src = craneLib.cleanCargoSource (craneLib.path ./.);
-          commonArgs = {
-            inherit src;
-            strictDeps = true;
-          };
-          cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-          bin =
-            craneLib.buildPackage (commonArgs // { inherit cargoArtifacts; });
           treeFmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+          naersk' = pkgs.callPackage naersk { };
         in {
-          devShells.default = craneLib.devShell {
-            inputsFrom = [ bin ];
-            packages = with pkgs; [ just bacon cargo-udeps ];
+          devShells.default = pkgs.mkShell {
+            packages = with pkgs; [ rustToolchain just bacon ];
           };
-
-          packages.default = bin;
-
-          apps.default = utils.lib.mkApp { drv = bin; };
-
-          checks = {
-            inherit bin;
-            fmt = craneLib.cargoFmt { inherit src; };
-            clippy =
-              craneLib.cargoClippy (commonArgs // { inherit cargoArtifacts; });
-          };
-
+          packages.default = naersk'.buildPackage { src = ./.; };
           formatter = treeFmtEval.config.build.wrapper;
         };
     };
