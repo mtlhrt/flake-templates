@@ -1,18 +1,9 @@
 [package]
-name = "simple-rust"
+name = "nightly-rust"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-
-[lints.rust]
-unsafe_code = "forbid"
-
-[lints.clippy]
-missing_errors_doc = { level = "warn", priority = 3 } # important for libs, negligible for bins.
-pedantic = { level = "deny", priority = 2 }
-nursery = { level = "deny", priority = 1 }
-unwrap_used = { level = "deny", priority = 0 }
 
 [profile.release]
 lto = true
