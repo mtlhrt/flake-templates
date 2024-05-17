@@ -9,7 +9,7 @@
       inputs.flake-utils.follows = "utils";
     };
   };
-  outputs = inputs@{ nixpkgs, parts, rust, treefmt-nix, naersk, ... }:
+  outputs = inputs@{ nixpkgs, parts, rust, naersk, ... }:
     parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" ];
 
@@ -17,13 +17,15 @@
         let
           overlays = [ (import rust) ];
           pkgs = import nixpkgs { inherit system overlays; };
-          rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile
+          toolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile
             ./rust-toolchain.toml;
-          naersk-lib = pkgs.callPackage naersk { };
-        in {
-          devShells.default = pkgs.mkShell {
-            packages = with pkgs; [ rustToolchain just bacon ];
+          naersk-lib = pkgs.callPackage naersk {
+            cargo = toolchain;
+            rustc = toolchain;
           };
+        in {
+          devShells.default =
+            pkgs.mkShell { packages = with pkgs; [ toolchain just bacon ]; };
           packages.default = naersk-lib.buildPackage { src = ./.; };
         };
     };
