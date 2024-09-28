@@ -24,7 +24,7 @@
           };
         in {
           devShells.default =
-            pkgs.mkShell { packages = with pkgs; [ toolchain just bacon ]; };
+            pkgs.mkShell { packages = with pkgs; [ toolchain just bacon nil taplo ]; };
           packages.default = naersk-lib.buildPackage { src = ./.; };
         };
     };
