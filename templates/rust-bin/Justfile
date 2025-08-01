@@ -1,0 +1,10 @@
+_default:
+  just --list
+watch:
+  bacon clippy
+dev:
+  cargo run
+run:
+  cargo run --release
+build:
+  cargo build --release

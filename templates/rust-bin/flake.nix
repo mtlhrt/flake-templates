@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
     parts.url = "github:hercules-ci/flake-parts";
     naersk.url = "github:nix-community/naersk";
     rust = {

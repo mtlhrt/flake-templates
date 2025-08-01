@@ -1,9 +1,13 @@
 {
   outputs = _: {
     templates = {
-      nightly-rust = {
-        path = ./templates/nightly-rust;
-        description = "a nightly Rust template.";
+      rust-lib = {
+        path = ./templates/rust-lib;
+        description = "A Rust library template.";
+      };
+      rust-bin = {
+        path = ./templates/rust-bin;
+        description = "A Rust binary template.";
       };
       gleam = {
         path = ./templates/gleam;
