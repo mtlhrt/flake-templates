@@ -1,6 +1,6 @@
 {
   description = "a basic Deno development environment with Nix.";
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/release-24.11";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/release-26.05";
   outputs = { nixpkgs, ... }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
