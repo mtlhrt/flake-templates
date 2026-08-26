@@ -17,6 +17,10 @@
         path = ./templates/deno;
         description = "a Deno template.";
       };
+      tmod = {
+        path = ./templates/tmod-1.4;
+        description= "A tModloader 1.4.x mod project template.";
+      };
     };
   };
 }
