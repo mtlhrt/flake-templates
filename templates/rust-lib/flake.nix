@@ -1,25 +1,28 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/release-26.05";
-    parts.url = "github:hercules-ci/flake-parts";
     rust = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = inputs@{ nixpkgs, parts, rust, ... }:
-    parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" ];
-
-      perSystem = { system, ... }:
-        let
-          overlays = [ (import rust) ];
-          pkgs = import nixpkgs { inherit system overlays; };
-          toolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile
-            ./rust-toolchain.toml;
-        in {
-          devShells.default =
-            pkgs.mkShell { packages = with pkgs; [ toolchain just bacon nil nixfmt-classic taplo ]; };
-        };
-    };
+  outputs = inputs@{ nixpkgs, rust, ... }: let 
+    readToml = file: builtins.fromTOML (builtins.readFile file);
+    systems = [ "x86_64-linux" "aarch64-linux" ];
+    overlays = [ (import rust) ];
+    eachSystem = fn: nixpkgs.lib.genAttrs systems 
+      (system: fn (import nixpkgs { inherit system overlays; }));
+  in {
+    devShells = eachSystem (pkgs: let 
+      toolchain = (readToml ./rust-toolchain.toml).toolchain;
+      rustBin = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchain {
+        inherit (toolchainFile) channel components targets; 
+      };
+    in {
+      default = pkgs.mkShell { packages = with pkgs; [ 
+        rustBin just bacon nil nixfmt-classic taplo 
+      ];
+      };
+    });
+  };
 }
